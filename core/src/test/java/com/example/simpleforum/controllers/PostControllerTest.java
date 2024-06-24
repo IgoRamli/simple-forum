@@ -1,9 +1,14 @@
 package com.example.simpleforum.controllers;
 
+import com.example.simpleforum.beans.AuthUserBean;
+import com.example.simpleforum.beans.PostCreateRequestBean;
 import com.example.simpleforum.generators.PostGenerator;
 import com.example.simpleforum.model.Post;
 import com.example.simpleforum.repositories.PostRepository;
 import com.example.simpleforum.utils.AuthUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.With;
+import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
@@ -14,6 +19,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -28,8 +34,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -66,13 +71,6 @@ public class PostControllerTest {
     }
 
     @Test
-    void givenUserIsUnauthenticated_whenUserGetPosts_shouldReturn401() throws Exception {
-        this.mockMvc.perform(get("/posts"))
-                .andDo(print())
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
     @WithMockUser(roles = "user")
     void whenUserGetPosts_shouldReturnAllPosts() throws Exception {
         List<Post> posts = PostGenerator.generateRandomListOfPosts(3);
@@ -81,6 +79,13 @@ public class PostControllerTest {
         this.mockMvc.perform(get("/posts"))
                 .andDo(print())
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void givenUserIsUnauthenticated_whenUserGetPosts_shouldReturn401() throws Exception {
+        this.mockMvc.perform(get("/posts"))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -109,6 +114,31 @@ public class PostControllerTest {
         this.mockMvc.perform(get(String.format("/posts/%d", 3)))
                 .andDo(print())
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(roles = "user")
+    void whenUserCreatesPost_ShouldReturn204() throws Exception {
+        setUpJwtToken("thisUser");
+        PostCreateRequestBean requestBody = PostCreateRequestBean.builder()
+                .title("Sample Title")
+                .content("Sample content")
+                .build();
+        when(postRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        this.mockMvc.perform(post("/posts")
+                        .with(csrf())
+                        .content(new ObjectMapper().writeValueAsString(requestBody))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isCreated());
+        verify(postRepository, times(1)).saveAndFlush(any());
+    }
+
+    @Test
+    void givenUserIsUnauthenticated_whenUserCreatesPost_ShouldReturn401() throws Exception {
+        this.mockMvc.perform(post("/posts").with(csrf()))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -164,5 +194,9 @@ public class PostControllerTest {
         Jwt jwt = mock(Jwt.class);
         when(authentication.getPrincipal()).thenReturn(jwt);
         when(jwt.getSubject()).thenReturn(userId);
+        when(authUtils.getAuthDetails(any())).thenReturn(
+                AuthUserBean.builder()
+                        .id(userId)
+                        .build());
     }
 }

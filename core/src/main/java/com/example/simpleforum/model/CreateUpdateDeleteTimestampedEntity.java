@@ -26,7 +26,6 @@ public abstract class CreateUpdateDeleteTimestampedEntity {
     @PreUpdate
     @Modifying
     public void setTimestamps() {
-        System.out.println("Setting timestamps");
         updatedAt = Timestamp.from(Instant.now());
         if (Objects.isNull(createdAt)) {
             createdAt = Timestamp.from(Instant.now());

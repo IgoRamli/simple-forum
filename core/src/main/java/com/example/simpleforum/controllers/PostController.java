@@ -13,7 +13,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @CrossOrigin(origins = "http://localhost:3000")
@@ -50,6 +49,7 @@ public class PostController {
     }
 
     @PostMapping("/posts")
+    @ResponseStatus(HttpStatus.CREATED)
     public Post createPost(@RequestBody PostCreateRequestBean postCreateRequest, Authentication authentication) {
         AuthUserBean user = authUtils.getAuthDetails(authentication);
         Post newPost = modelMapper.map(postCreateRequest, Post.class);
