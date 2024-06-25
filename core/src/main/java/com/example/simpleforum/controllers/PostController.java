@@ -9,6 +9,7 @@ import com.example.simpleforum.utils.AuthUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,8 @@ import java.util.Optional;
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
 public class PostController {
+    private static final Long BATCH_LIMIT = 100L;
+
     private final PostRepository postRepository;
 
     private final AuthUtils authUtils;
@@ -37,9 +40,14 @@ public class PostController {
     }
 
     @GetMapping("/posts")
-    public List<Post> getPosts(@RequestParam Optional<String> keyword) {
-        return keyword.map(postRepository::findByTitleKeyword)
-                .orElseGet(postRepository::findAll);
+    public List<Post> getPosts(@RequestParam Optional<String> keyword, @RequestParam Long limit, @RequestParam Optional<Long> lastId) {
+        if (keyword.isPresent()) {
+            return lastId.map(id -> postRepository.findByTitleKeyword(keyword.get(), limit, id))
+                                    .orElseGet(() -> postRepository.findByTitleKeyword(keyword.get(), limit));
+        } else {
+            return lastId.map(id -> postRepository.findAll(limit, id))
+                                    .orElseGet(() -> postRepository.findAll(limit));
+        }
     }
 
     @GetMapping("/posts/{id}")

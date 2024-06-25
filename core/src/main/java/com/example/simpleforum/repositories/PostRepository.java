@@ -11,11 +11,17 @@ import java.util.Optional;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
-    @Query("SELECT p FROM Post p WHERE p.deletedAt IS NULL ORDER BY p.createdAt DESC")
-    List<Post> findAll();
+    @Query("SELECT p FROM Post p WHERE p.deletedAt IS NULL ORDER BY p.id DESC LIMIT ?1")
+    List<Post> findAll(Long limit);
 
-    @Query("SELECT p FROM Post p WHERE p.deletedAt IS NULL AND p.title LIKE CONCAT('%', ?1, '%') ORDER BY p.createdAt DESC")
-    List<Post> findByTitleKeyword(String keyword);
+    @Query("SELECT p FROM Post p WHERE p.deletedAt IS NULL AND p.id < ?2 ORDER BY p.id DESC LIMIT ?1")
+    List<Post> findAll(Long limit, Long lastId);
+
+    @Query("SELECT p FROM Post p WHERE p.deletedAt IS NULL AND p.title LIKE CONCAT('%', ?1, '%') ORDER BY p.id DESC LIMIT ?2")
+    List<Post> findByTitleKeyword(String keyword, Long limit);
+
+    @Query("SELECT p FROM Post p WHERE p.deletedAt IS NULL AND p.id < ?3 AND p.title LIKE CONCAT('%', ?1, '%') ORDER BY p.id DESC LIMIT ?2")
+    List<Post> findByTitleKeyword(String keyword, Long limit, Long lastId);
 
     @Query("SELECT p FROM Post p WHERE p.id = ?1 AND p.deletedAt IS NULL")
     Optional<Post> findById(Long id);

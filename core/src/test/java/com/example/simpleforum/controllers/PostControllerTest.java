@@ -74,11 +74,60 @@ public class PostControllerTest {
     @WithMockUser(roles = "user")
     void whenUserGetPosts_shouldReturnAllPosts() throws Exception {
         List<Post> posts = PostGenerator.generateRandomListOfPosts(3);
-        when(postRepository.findAll()).thenReturn(posts);
+        when(postRepository.findAll(100L)).thenReturn(posts);
 
-        this.mockMvc.perform(get("/posts"))
+        this.mockMvc.perform(get("/posts")
+                        .queryParam("limit", "100"))
                 .andDo(print())
                 .andExpect(status().isOk());
+
+        verify(postRepository).findAll(100L);
+    }
+
+    @Test
+    @WithMockUser(roles = "user")
+    void givenUserProvidesLastId_whenUserGetPosts_shouldReturnAllPosts() throws Exception {
+        List<Post> posts = PostGenerator.generateRandomListOfPosts(3);
+        when(postRepository.findAll(100L)).thenReturn(posts);
+
+        this.mockMvc.perform(get("/posts")
+                        .queryParam("limit", "100")
+                        .queryParam("lastId", "5"))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        verify(postRepository).findAll(100L, 5L);
+    }
+
+    @Test
+    @WithMockUser(roles = "user")
+    void givenUserProvidesKeyword_whenUserGetPosts_shouldReturnAllPosts() throws Exception {
+        List<Post> posts = PostGenerator.generateRandomListOfPosts(3);
+        when(postRepository.findByTitleKeyword("kw", 100L)).thenReturn(posts);
+
+        this.mockMvc.perform(get("/posts")
+                        .queryParam("keyword", "kw")
+                        .queryParam("limit", "100"))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        verify(postRepository).findByTitleKeyword("kw", 100L);
+    }
+
+    @Test
+    @WithMockUser(roles = "user")
+    void givenUserProvidesKeywordAndLastId_whenUserGetPosts_shouldReturnAllPosts() throws Exception {
+        List<Post> posts = PostGenerator.generateRandomListOfPosts(3);
+        when(postRepository.findByTitleKeyword("kw", 100L, 5L)).thenReturn(posts);
+
+        this.mockMvc.perform(get("/posts")
+                        .queryParam("keyword", "kw")
+                        .queryParam("limit", "100")
+                        .queryParam("lastId", "5"))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        verify(postRepository).findByTitleKeyword("kw", 100L, 5L);
     }
 
     @Test
@@ -89,10 +138,11 @@ public class PostControllerTest {
     }
 
     @Test
-    void givenUserIsUnauthenticated_whenUserGetPostById_shouldReturn401() throws Exception {
-        this.mockMvc.perform(get(String.format("/posts/%d", 3)))
+    @WithMockUser(roles = "user")
+    void givenUserDoesNotProvideLimit_whenUserGetPosts_shouldReturn400() throws Exception {
+        this.mockMvc.perform(get("/posts"))
                 .andDo(print())
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -104,6 +154,13 @@ public class PostControllerTest {
         this.mockMvc.perform(get(String.format("/posts/%d", 3)))
                 .andDo(print())
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void givenUserIsUnauthenticated_whenUserGetPostById_shouldReturn401() throws Exception {
+        this.mockMvc.perform(get(String.format("/posts/%d", 3)))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -142,13 +199,6 @@ public class PostControllerTest {
     }
 
     @Test
-    void givenUserIsUnauthenticated_whenUserDeletePosts_shouldReturn401() throws Exception {
-        this.mockMvc.perform(delete(String.format("/posts/%d", 3)).with(csrf()))
-                .andDo(print())
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
     @WithMockUser(roles = "user")
     void whenUserDeletePost_shouldReturn204() throws Exception {
         setUpJwtToken("thisUser");
@@ -161,6 +211,13 @@ public class PostControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(postRepository).deleteById(3L);
+    }
+
+    @Test
+    void givenUserIsUnauthenticated_whenUserDeletePosts_shouldReturn401() throws Exception {
+        this.mockMvc.perform(delete(String.format("/posts/%d", 3)).with(csrf()))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

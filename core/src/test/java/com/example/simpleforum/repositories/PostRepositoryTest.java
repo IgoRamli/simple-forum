@@ -25,7 +25,7 @@ public class PostRepositoryTest {
 
     @Test
     void givenPosts_whenGetPosts_thenReturnAllPosts() {
-        List<Post> result = postRepository.findAll();
+        List<Post> result = postRepository.findAll(10L);
         assertThat(result).isNotEmpty().hasSize(4);
 
         assertThat(result).allSatisfy(post -> {
@@ -43,12 +43,68 @@ public class PostRepositoryTest {
     }
 
     @Test
+    void givenPosts_whenGetPostsWithLimitOfK_thenReturnFirstKPosts() {
+        List<Post> result = postRepository.findAll(3L);
+        assertThat(result).isNotEmpty().hasSize(3);
+
+        assertThat(result).allSatisfy(post -> {
+            assertThat(post.getId()).isNotNull();
+            assertThat(post.getUserId()).isNotNull();
+            assertThat(post.getTitle()).isNotNull();
+            assertThat(post.getContent()).isNotNull();
+            assertThat(post.getCreatedAt()).isNotNull();
+            assertThat(post.getUpdatedAt()).isNotNull();
+            assertThat(post.getDeletedAt()).isNull();
+        });
+
+        List<Long> postIds = result.stream().map(Post::getId).toList();
+        assertThat(postIds).containsExactlyElementsOf(Arrays.asList(5L, 4L, 2L));
+    }
+
+    @Test
+    void givenPosts_whenGetPostsWithLastId_thenOnlyReturnPostsBeforeLastId() {
+        List<Post> result = postRepository.findAll(3L, 5L);
+        assertThat(result).isNotEmpty().hasSize(3);
+
+        assertThat(result).allSatisfy(post -> {
+            assertThat(post.getId()).isNotNull();
+            assertThat(post.getUserId()).isNotNull();
+            assertThat(post.getTitle()).isNotNull();
+            assertThat(post.getContent()).isNotNull();
+            assertThat(post.getCreatedAt()).isNotNull();
+            assertThat(post.getUpdatedAt()).isNotNull();
+            assertThat(post.getDeletedAt()).isNull();
+        });
+
+        List<Long> postIds = result.stream().map(Post::getId).toList();
+        assertThat(postIds).containsExactlyElementsOf(Arrays.asList(4L, 2L, 1L));
+    }
+
+    @Test
     void givenPosts_whenGetPostsByTitleKeyword_thenReturnAllMatchingPosts() {
-        List<Post> result = postRepository.findByTitleKeyword("Post");
+        List<Post> result = postRepository.findByTitleKeyword("Post", 10L);
         assertThat(result).isNotEmpty().hasSize(2);
 
         List<Long> postIds = result.stream().map(Post::getId).toList();
         assertThat(postIds).containsExactlyElementsOf(Arrays.asList(2L, 1L));
+    }
+
+    @Test
+    void givenPosts_whenGetPostsByTitleKeywordWithLimitOfK_thenReturnFirstKMatchingPosts() {
+        List<Post> result = postRepository.findByTitleKeyword("Post", 1L);
+        assertThat(result).isNotEmpty().hasSize(1);
+
+        List<Long> postIds = result.stream().map(Post::getId).toList();
+        assertThat(postIds).containsExactlyElementsOf(List.of(2L));
+    }
+
+    @Test
+    void givenPosts_whenGetPostsByTitleKeywordWithLastId_thenReturnMatchingPostsAfterLastId() {
+        List<Post> result = postRepository.findByTitleKeyword("Post", 1L, 2L);
+        assertThat(result).isNotEmpty().hasSize(1);
+
+        List<Long> postIds = result.stream().map(Post::getId).toList();
+        assertThat(postIds).containsExactlyElementsOf(List.of(1L));
     }
 
     // @Test
