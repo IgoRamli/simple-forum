@@ -7,28 +7,20 @@ import com.example.simpleforum.model.Post;
 import com.example.simpleforum.repositories.PostRepository;
 import com.example.simpleforum.utils.AuthUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.With;
-import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.context.WebApplicationContext;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
@@ -50,12 +42,6 @@ public class PostControllerTest {
 
     @MockBean
     private AuthUtils authUtils;
-
-    @SpyBean
-    private ModelMapper modelMapper;
-
-    @Autowired
-    private WebApplicationContext context;
 
     private Authentication authentication;
 
